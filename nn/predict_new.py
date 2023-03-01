@@ -34,19 +34,12 @@ import os
 import platform
 import sys
 from pathlib import Path
+
+'''
+@jasperan code block
+'''
 import pandas as pd
-
-base_path = """H:\\WORK\\reto_nuwe\\reto"""
-
-df_test = pd.read_csv('{}\\test.csv'.format(base_path), sep=',', engine='python')
-print('Test Dataset Length: {}'.format(len(df_test)))
-
-final_obj =  {
-    "0": 1,
-}
-
-
-
+import json
 import torch
 import torch.nn.functional as F
 
@@ -63,6 +56,16 @@ from utils.general import (LOGGER, Profile, check_file, check_img_size, check_im
                            increment_path, print_args, strip_optimizer)
 from utils.plots import Annotator
 from utils.torch_utils import select_device, smart_inference_mode
+
+
+'''
+@jasperan code block
+'''
+base_path = """H:\\WORK\\reto_nuwe\\reto"""
+df_test = pd.read_csv('{}\\test.csv'.format(base_path), sep=',', engine='python')
+print('Test Dataset Length: {}'.format(len(df_test)))
+final_obj =  {}
+
 
 
 @smart_inference_mode()
@@ -116,16 +119,6 @@ def run(
         dataset = LoadImages(source, img_size=imgsz, transforms=classify_transforms(imgsz[0]), vid_stride=vid_stride)
     vid_path, vid_writer = [None] * bs, [None] * bs
 
-    '''
-        for x in range(len(df_test)):
-            current_img = df_test.iloc[x]['path_img']
-            current_img = current_img.replace('all_imgs/', '')
-            final_obj[current_img] = 0
-            original_file_path = '{}\\{}'.format(base_path, current_img)
-            print('[TEST] {}: {}'.format(source, os.path.isfile(source)))
-            shutil.copy(original_file_path, "H:\\WORK\\reto_nuwe\\reto\\test\\{}".format(df_test.iloc[x]['label'])) # error identified
-    '''
-
     # Run inference
     model.warmup(imgsz=(1 if pt else bs, 3, *imgsz))  # warmup
     seen, windows, dt = 0, [], (Profile(), Profile(), Profile())
@@ -161,53 +154,27 @@ def run(
             s += '%gx%g ' % im.shape[2:]  # print string
             annotator = Annotator(im0, example=str(names), pil=True)
 
+            '''
+            @jasperan code block - heavily modified part
+            '''
             # Print results
             top5i = prob.argsort(0, descending=True)[:5].tolist()  # top 5 indices
             s += f"{', '.join(f'{names[j]} {prob[j]:.2f}' for j in top5i)}, "
-            print('[TEST LOADIMAGES] {}: {}'.format(path, os.path.isfile(path)))
+            #print('[TEST LOADIMAGES] {}: {}'.format(path, os.path.isfile(path)))
+            image_actual = path.replace('H:\\WORK\\reto_nuwe\\reto\\val\\', '')
+            print('{}: {}'.format(image_actual, top5i))
 
-            print()
-            print('Predicted {}'.format(top5i[0]))
-            # Write results
-            #text = '\n'.join(f'{prob[j]:.2f} {names[j]}' for j in top5i)
-            #if save_img or view_img:  # Add bbox to image
-            #    annotator.text((32, 32), text, txt_color=(255, 255, 255))
-            #if save_txt:  # Write to file
-            #    with open(f'{txt_path}.txt', 'a') as f:
-            #        f.write(text + '\n')
-
-            # Stream results
-            #im0 = annotator.result()
-            #if view_img:
-            #    if platform.system() == 'Linux' and p not in windows:
-            #        windows.append(p)
-            #        cv2.namedWindow(str(p), cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)  # allow window resize (Linux)
-            #        cv2.resizeWindow(str(p), im0.shape[1], im0.shape[0])
-            #    cv2.imshow(str(p), im0)
-            #    cv2.waitKey(1)  # 1 millisecond
-
-            # Save results (image with detections)
-            #if save_img:
-            #    if dataset.mode == 'image':
-            #        cv2.imwrite(save_path, im0)
-            #    else:  # 'video' or 'stream'
-            #        if vid_path[i] != save_path:  # new video
-            #            vid_path[i] = save_path
-            #            if isinstance(vid_writer[i], cv2.VideoWriter):
-            #                vid_writer[i].release()  # release previous video writer
-            #            if vid_cap:  # video
-            #                fps = vid_cap.get(cv2.CAP_PROP_FPS)
-            #                w = int(vid_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-            #                h = int(vid_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-            #            else:  # stream
-            #                fps, w, h = 30, im0.shape[1], im0.shape[0]
-            #            save_path = str(Path(save_path).with_suffix('.mp4'))  # force *.mp4 suffix on results videos
-            #            vid_writer[i] = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
-            #        vid_writer[i].write(im0)
+            final_obj[image_actual] = top5i[0]
+            print('[TEST] {}'.format(len(final_obj)))
 
         # Print time (inference-only)
         LOGGER.info(f'{s}{dt[1].dt * 1E3:.1f}ms')
 
+    # Save JSON object
+    json_final = {'target': final_obj}
+    print('JSON FINAL: {}'.format(len(final_obj)))
+    with open('old_predictions.json', 'w') as f:
+        json.dump(json_final, f)
     # Print results
     t = tuple(x.t / seen * 1E3 for x in dt)  # speeds per image
     LOGGER.info(f'Speed: %.1fms pre-process, %.1fms inference, %.1fms NMS per image at shape {(1, 3, *imgsz)}' % t)
