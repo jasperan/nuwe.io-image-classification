@@ -19,8 +19,8 @@ import json
 import pandas as pd
 
 # Opening JSON file
-f = open('../old_predictions.json')
-df_test = pd.read_csv('H:/WORK/reto_nuwe/reto/test.csv')  
+f = open('../v2_old_predictions.json')
+df_test = pd.read_csv('H:/datasets/oracle_CV/test.csv')  
 # returns JSON object as 
 # a dictionary
 data = json.load(f)

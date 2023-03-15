@@ -11,7 +11,9 @@ import os
 # default path for my dataset H:\WORK\reto_nuwe
 # We read the dataset from the local file
 
-base_path = """H:\\WORK\\reto_nuwe\\reto"""
+#base_path = """H:\\WORK\\reto_nuwe\\reto"""
+base_path = """H:\\datasets\\oracle_CV"""
+
 df_train = pd.read_csv('{}\\train.csv'.format(base_path), sep=',', engine='python')
 df_test = pd.read_csv('{}\\test.csv'.format(base_path), sep=',', engine='python')
 
@@ -26,7 +28,7 @@ for x in range(len(df_train)):
     assert 'all_imgs/' in current_img
     original_file_path = '{}\\{}'.format(base_path, current_img)
     print('[TRAIN] {}: {}'.format(original_file_path, os.path.isfile(original_file_path)))
-    shutil.copy(original_file_path, "H:\\WORK\\reto_nuwe\\reto\\train\\{}".format(df_train.iloc[x]['label']))
+    shutil.copy(original_file_path, "H:\\datasets\\oracle_CV\\train\\{}".format(df_train.iloc[x]['label']))
 
 
 for x in range(len(df_test)):
@@ -34,7 +36,7 @@ for x in range(len(df_test)):
     assert 'all_imgs/' in current_img
     original_file_path = '{}\\{}'.format(base_path, current_img)
     print('[TEST] {}: {}'.format(original_file_path, os.path.isfile(original_file_path)))
-    shutil.copy(original_file_path, "H:\\WORK\\reto_nuwe\\reto\\test\\{}".format(df_test.iloc[x]['label'])) # error identified
+    shutil.copy(original_file_path, "H:\\datasets\\oracle_CV\\test")
 
 
 #shutil.move("H:\\WORK\\reto_nuwe\\reto\\all_imgs\\1.txt", "H:\\WORK\\reto_nuwe\\reto\\test\\1.txt")
