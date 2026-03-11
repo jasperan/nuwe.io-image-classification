@@ -1,48 +1,53 @@
-'''
-@author jasperan
+"""
+Reshape raw predictions into the competition submission format.
 
-This code will translate the old_predictions.json file into the correct submission format
+Maps image-name-keyed predictions to idx_test-keyed predictions
+as required by the nuwe.io submission format.
 
-example:
-
-{
-    "target": {
-        "0": 1,
-        "1": 2
-    }
-}
-
-where key=idx_test and value=prediction from the model.
-'''
+Usage:
+    python reshape_solution.py --predictions raw_predictions.json --test test.csv --output predictions.json
+"""
 
 import json
+import logging
+from pathlib import Path
+
 import pandas as pd
 
-# Opening JSON file
-f = open('../v2_old_predictions.json')
-df_test = pd.read_csv('H:/datasets/oracle_CV/test.csv')  
-# returns JSON object as 
-# a dictionary
-data = json.load(f)
-
-new_object = {}
-
-print(len(data['target']))
-print(len(df_test))
-assert len(data['target']) == len(df_test)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+logger = logging.getLogger(__name__)
 
 
+def reshape(predictions_path: str, test_csv_path: str, output_path: str = "predictions.json"):
+    with open(predictions_path) as f:
+        data = json.load(f)
 
-for x in range(len(df_test)):
-    #for key in data['target']:
-    current_img = df_test.iloc[x]['path_img'].replace('all_imgs/', '')
-    current_idx = df_test.iloc[x]['idx_test']
-    new_object[str(current_idx)] = data['target'][current_img]
-    print(current_img, current_idx, data['target'][current_img])
+    df_test = pd.read_csv(test_csv_path)
 
-print(len(new_object))
+    assert len(data["target"]) == len(df_test), (
+        f"Prediction count mismatch: {len(data['target'])} predictions vs {len(df_test)} test samples"
+    )
 
-final_json = {'target': new_object}
+    # Vectorized mapping: image path -> idx_test -> prediction
+    df_test["img_key"] = df_test["path_img"].str.replace("all_imgs/", "", regex=False)
+    df_test["prediction"] = df_test["img_key"].map(data["target"])
 
-with open('../predictions.json', 'w') as f:
-        json.dump(final_json, f)
+    new_target = dict(zip(df_test["idx_test"].astype(str), df_test["prediction"]))
+
+    output = {"target": new_target}
+    with open(output_path, "w") as f:
+        json.dump(output, f)
+
+    logger.info(f"Reshaped {len(new_target)} predictions -> {output_path}")
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Reshape predictions to submission format")
+    parser.add_argument("--predictions", type=str, required=True, help="Raw predictions JSON")
+    parser.add_argument("--test", type=str, required=True, help="Path to test.csv")
+    parser.add_argument("--output", type=str, default="predictions.json", help="Output submission JSON")
+    args = parser.parse_args()
+
+    reshape(args.predictions, args.test, args.output)

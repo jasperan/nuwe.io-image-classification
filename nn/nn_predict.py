@@ -1,45 +1,48 @@
-from ultralytics import YOLO
+"""
+Predict class labels for test images using a trained YOLO classification model.
+
+Reads test.csv, runs inference on each image, and saves predictions to JSON.
+"""
+
 import json
-import pandas as pd
-import torch
-import argparse
-import os
-import platform
-import sys
+import logging
 from pathlib import Path
 
+import pandas as pd
+from ultralytics import YOLO
 
-model = YOLO("H:/models/nuwe.pt") # load pretrained model (recommended for training)
-base_path = """H:\\WORK\\reto_nuwe\\reto"""
-
-
-if __name__ == '__main__':
-    final_object = {}
-    df_test = pd.read_csv('{}\\test.csv'.format(base_path), sep=',', engine='python')
-
-    # .iloc[i] to get ith row
-    print('Test Data Length:{} test'.format(len(df_test)))
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+logger = logging.getLogger(__name__)
 
 
-    for x in range(len(df_test)):
-        current_img = df_test.iloc[x]['path_img']
-        # Run Model Prediction
-        original_file_path = '{}\\{}'.format(base_path, current_img)
-        print(original_file_path)
-        results = model(original_file_path)  # predict on an image
-        print(results)
+def predict(model_path: str, base_path: str, output_path: str = "predictions.json"):
+    model = YOLO(model_path)
+    base = Path(base_path)
 
-        print('[TEST] {}: {}'.format(original_file_path, os.path.isfile(original_file_path)))
+    df_test = pd.read_csv(base / "test.csv", sep=",")
+    logger.info(f"Test dataset length: {len(df_test)}")
+
+    predictions = {}
+    for idx, row in df_test.iterrows():
+        img_path = base / row["path_img"]
+        results = model(str(img_path))
+        top1_class = int(results[0].probs.top1)
+        predictions[str(idx)] = top1_class
+        logger.info(f"[{idx}/{len(df_test)}] {img_path.name} -> class {top1_class}")
+
+    output = {"target": predictions}
+    with open(output_path, "w") as f:
+        json.dump(output, f)
+    logger.info(f"Saved {len(predictions)} predictions to {output_path}")
 
 
+if __name__ == "__main__":
+    import argparse
 
-    test_file = pd.read_csv('./test.csv')
-    results = model.val()
+    parser = argparse.ArgumentParser(description="Run YOLO classification inference")
+    parser.add_argument("--model", type=str, required=True, help="Path to .pt model file")
+    parser.add_argument("--data", type=str, required=True, help="Base path containing test.csv and images")
+    parser.add_argument("--output", type=str, default="predictions.json", help="Output JSON path")
+    args = parser.parse_args()
 
-
-{
-    "target": {
-        "0": 1,
-    }
-}
-
+    predict(args.model, args.data, args.output)

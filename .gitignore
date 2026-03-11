@@ -127,3 +127,25 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# YOLO model weights
+*.pt
+*.onnx
+*.engine
+*.tflite
+models/
+
+# Dataset and training artifacts
+datasets/
+runs/
+data/
+
+# Planning and generated docs
+docs/plans/
+task_plan.md
+findings.md
+progress.md
+
+# Stale intermediate predictions
+v1_old_predictions.json
+v2_old_predictions.json

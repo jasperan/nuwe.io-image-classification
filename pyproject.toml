@@ -1,0 +1,34 @@
+[project]
+name = "nuwe-image-classification"
+version = "1.0.0"
+description = "8-class image classifier for the nuwe.io Oracle Spain challenge, built with Ultralytics YOLO"
+readme = "README.md"
+license = {text = "GPL-3.0"}
+requires-python = ">=3.9"
+authors = [
+    {name = "jasperan"},
+]
+
+dependencies = [
+    "ultralytics>=8.0.0",
+    "pandas>=1.5.0",
+    "torch>=2.0.0",
+    "numpy>=1.24.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "ruff>=0.1.0",
+]
+demo = [
+    "gradio>=4.0",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]

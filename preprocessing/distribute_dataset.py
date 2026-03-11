@@ -1,44 +1,61 @@
-'''
-@author jasperan
+"""
+Distribute dataset images into class-labeled directories for YOLO training.
 
-This file will distribute both train.csv and test.csv into different folders, to prepare for training.
-'''
+Reads train.csv and test.csv, copies images into train/{label}/ and test/ directories
+following the Ultralytics classification dataset structure.
+
+Usage:
+    python distribute_dataset.py --data /path/to/dataset --output /path/to/output
+"""
+
+import logging
+import shutil
+from pathlib import Path
 
 import pandas as pd
-import shutil
-import os
 
-# default path for my dataset H:\WORK\reto_nuwe
-# We read the dataset from the local file
-
-#base_path = """H:\\WORK\\reto_nuwe\\reto"""
-base_path = """H:\\datasets\\oracle_CV"""
-
-df_train = pd.read_csv('{}\\train.csv'.format(base_path), sep=',', engine='python')
-df_test = pd.read_csv('{}\\test.csv'.format(base_path), sep=',', engine='python')
-
-# .iloc[i] to get ith row
-print('Dataset Lengths: {} train | {} test'.format(len(df_train), len(df_test)))
-
-print(df_train.iloc[0]['path_img'])
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+logger = logging.getLogger(__name__)
 
 
-for x in range(len(df_train)):
-    current_img = df_train.iloc[x]['path_img']
-    assert 'all_imgs/' in current_img
-    original_file_path = '{}\\{}'.format(base_path, current_img)
-    print('[TRAIN] {}: {}'.format(original_file_path, os.path.isfile(original_file_path)))
-    shutil.copy(original_file_path, "H:\\datasets\\oracle_CV\\train\\{}".format(df_train.iloc[x]['label']))
+def distribute(data_path: str, output_path: str):
+    base = Path(data_path)
+    output = Path(output_path)
+
+    df_train = pd.read_csv(base / "train.csv", sep=",")
+    df_test = pd.read_csv(base / "test.csv", sep=",")
+    logger.info(f"Dataset lengths: {len(df_train)} train | {len(df_test)} test")
+
+    # Create output directories
+    train_dir = output / "train"
+    test_dir = output / "test"
+    train_dir.mkdir(parents=True, exist_ok=True)
+    test_dir.mkdir(parents=True, exist_ok=True)
+
+    # Distribute training images into class folders
+    for _, row in df_train.iterrows():
+        img_path = base / row["path_img"]
+        label = str(row["label"])
+        dest_dir = train_dir / label
+        dest_dir.mkdir(exist_ok=True)
+        shutil.copy(str(img_path), str(dest_dir))
+
+    logger.info(f"Copied {len(df_train)} training images to {train_dir}")
+
+    # Copy test images to flat directory
+    for _, row in df_test.iterrows():
+        img_path = base / row["path_img"]
+        shutil.copy(str(img_path), str(test_dir))
+
+    logger.info(f"Copied {len(df_test)} test images to {test_dir}")
 
 
-for x in range(len(df_test)):
-    current_img = df_test.iloc[x]['path_img']
-    assert 'all_imgs/' in current_img
-    original_file_path = '{}\\{}'.format(base_path, current_img)
-    print('[TEST] {}: {}'.format(original_file_path, os.path.isfile(original_file_path)))
-    shutil.copy(original_file_path, "H:\\datasets\\oracle_CV\\test")
+if __name__ == "__main__":
+    import argparse
 
+    parser = argparse.ArgumentParser(description="Distribute dataset into YOLO format")
+    parser.add_argument("--data", type=str, required=True, help="Base path with train.csv, test.csv, and images")
+    parser.add_argument("--output", type=str, required=True, help="Output directory for organized dataset")
+    args = parser.parse_args()
 
-#shutil.move("H:\\WORK\\reto_nuwe\\reto\\all_imgs\\1.txt", "H:\\WORK\\reto_nuwe\\reto\\test\\1.txt")
-
-#shutil.move("path/to/current/file.foo", "path/to/new/destination/for/file.foo")
+    distribute(args.data, args.output)
