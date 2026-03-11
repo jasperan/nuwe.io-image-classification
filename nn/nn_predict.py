@@ -24,11 +24,14 @@ def predict(model_path: str, base_path: str, output_path: str = "predictions.jso
 
     predictions = {}
     for idx, row in df_test.iterrows():
-        img_path = base / row["path_img"]
+        img_rel = row["path_img"]
+        img_path = base / img_rel
         results = model(str(img_path))
         top1_class = int(results[0].probs.top1)
-        predictions[str(idx)] = top1_class
-        logger.info(f"[{idx}/{len(df_test)}] {img_path.name} -> class {top1_class}")
+        # Key by image filename (strip "all_imgs/" prefix) for reshape compatibility
+        img_key = img_rel.replace("all_imgs/", "")
+        predictions[img_key] = top1_class
+        logger.info(f"[{idx + 1}/{len(df_test)}] {img_key} -> class {top1_class}")
 
     output = {"target": predictions}
     with open(output_path, "w") as f:

@@ -32,7 +32,15 @@ def reshape(predictions_path: str, test_csv_path: str, output_path: str = "predi
     df_test["img_key"] = df_test["path_img"].str.replace("all_imgs/", "", regex=False)
     df_test["prediction"] = df_test["img_key"].map(data["target"])
 
-    new_target = dict(zip(df_test["idx_test"].astype(str), df_test["prediction"]))
+    missing = df_test["prediction"].isna().sum()
+    if missing > 0:
+        missing_keys = df_test.loc[df_test["prediction"].isna(), "img_key"].tolist()[:5]
+        raise ValueError(
+            f"{missing} images have no matching prediction. "
+            f"First unmatched keys: {missing_keys}"
+        )
+
+    new_target = dict(zip(df_test["idx_test"].astype(str), df_test["prediction"].astype(int)))
 
     output = {"target": new_target}
     with open(output_path, "w") as f:

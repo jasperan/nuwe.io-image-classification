@@ -146,6 +146,8 @@ task_plan.md
 findings.md
 progress.md
 
-# Stale intermediate predictions
+# Generated predictions and results
+predictions*.json
+results.csv
 v1_old_predictions.json
 v2_old_predictions.json
