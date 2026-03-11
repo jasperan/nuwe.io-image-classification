@@ -30,6 +30,29 @@ postprocessing/         # Output formatting
 
 ## Setup
 
+<!-- one-command-install -->
+> **One-command install** — clone, configure, and run in a single step:
+>
+> ```bash
+> curl -fsSL https://raw.githubusercontent.com/jasperan/nuwe.io-image-classification/main/install.sh | bash
+> ```
+>
+> <details><summary>Advanced options</summary>
+>
+> Override install location:
+> ```bash
+> PROJECT_DIR=/opt/myapp curl -fsSL https://raw.githubusercontent.com/jasperan/nuwe.io-image-classification/main/install.sh | bash
+> ```
+>
+> Or install manually:
+> ```bash
+> git clone https://github.com/jasperan/nuwe.io-image-classification.git
+> cd nuwe.io-image-classification
+> # See below for setup instructions
+> ```
+> </details>
+
+
 ```bash
 # Install dependencies
 pip install -e .
