@@ -31,7 +31,7 @@ postprocessing/         # Output formatting
 ## Setup
 
 <!-- one-command-install -->
-> **One-command install** — clone, configure, and run in a single step:
+> **One-command install**: clone, configure, and run in a single step:
 >
 > ```bash
 > curl -fsSL https://raw.githubusercontent.com/jasperan/nuwe.io-image-classification/main/install.sh | bash
@@ -123,4 +123,4 @@ Augmentation settings (tuned for this dataset):
 
 ## License
 
-GPL-3.0 — see [LICENSE](LICENSE) for details.
+GPL-3.0. See [LICENSE](LICENSE) for details.

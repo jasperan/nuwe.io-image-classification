@@ -151,3 +151,16 @@ predictions*.json
 results.csv
 v1_old_predictions.json
 v2_old_predictions.json
+CLAUDE.md
+
+# Agent/skill directories (local only)
+.agents/
+.claude/
+.crush/
+.openhands/
+.serena/
+
+# Agent session artifacts
+dogfood-output/
+.playwright-mcp/
+content/
