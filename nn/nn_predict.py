@@ -4,12 +4,16 @@ Predict class labels for test images using a trained YOLO classification model.
 Reads test.csv, runs inference on each image, and saves predictions to JSON.
 """
 
-import json
 import logging
 from pathlib import Path
 
 import pandas as pd
 from ultralytics import YOLO
+
+if __package__:
+    from .prediction_utils import prediction_key, write_target_predictions
+else:
+    from prediction_utils import prediction_key, write_target_predictions
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -28,14 +32,11 @@ def predict(model_path: str, base_path: str, output_path: str = "predictions.jso
         img_path = base / img_rel
         results = model(str(img_path))
         top1_class = int(results[0].probs.top1)
-        # Key by image filename (strip "all_imgs/" prefix) for reshape compatibility
-        img_key = img_rel.replace("all_imgs/", "")
+        img_key = prediction_key(img_rel)
         predictions[img_key] = top1_class
         logger.info(f"[{idx + 1}/{len(df_test)}] {img_key} -> class {top1_class}")
 
-    output = {"target": predictions}
-    with open(output_path, "w") as f:
-        json.dump(output, f)
+    write_target_predictions(predictions, output_path)
     logger.info(f"Saved {len(predictions)} predictions to {output_path}")
 
 

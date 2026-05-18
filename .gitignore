@@ -161,6 +161,7 @@ CLAUDE.md
 .serena/
 
 # Agent session artifacts
+.omx/
 dogfood-output/
 .playwright-mcp/
 content/

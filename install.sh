@@ -44,8 +44,9 @@ print_banner() {
 clone_repo() {
     if [ -d "$INSTALL_DIR" ]; then
         warn "Directory $INSTALL_DIR already exists"
+        [ -d "$INSTALL_DIR/.git" ] || fail "Directory exists but is not a git checkout: $INSTALL_DIR"
         info "Pulling latest changes..."
-        (cd "$INSTALL_DIR" && git pull origin "$BRANCH" 2>/dev/null) || true
+        (cd "$INSTALL_DIR" && git pull origin "$BRANCH") || fail "Could not update existing checkout"
     else
         info "Cloning repository..."
         git clone --depth 1 -b "$BRANCH" "$REPO_URL" "$INSTALL_DIR" || fail "Clone failed. Check your internet connection."
@@ -87,13 +88,7 @@ install_deps() {
 
     info "Installing dependencies..."
     pip install --upgrade pip -q
-    pip install -e ".[dev]" -q 2>/dev/null || pip install -e . -q || {
-        if [ -f requirements.txt ]; then
-            pip install -r requirements.txt -q
-        else
-            fail "Could not install dependencies"
-        fi
-    }
+    pip install -e . -q || fail "Could not install dependencies"
     success "Dependencies installed"
 }
 
@@ -114,7 +109,7 @@ print_done() {
     echo -e "  ${BOLD}Location:${NC}  $INSTALL_DIR"
     echo -e "  ${BOLD}Activate:${NC}  source $INSTALL_DIR/.venv/bin/activate"
     echo ""
-    echo -e "  ${BOLD}Note:${NC}     Oracle Database connection required — see README for setup"
+    echo -e "  ${BOLD}Data:${NC}      Download the challenge dataset before training or prediction"
     echo ""
 }
 

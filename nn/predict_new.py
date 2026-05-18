@@ -8,7 +8,6 @@ Usage:
     python predict_new.py --model model.pt --data /path/to/dataset --output predictions.json
 """
 
-import json
 import logging
 from pathlib import Path
 
@@ -16,6 +15,11 @@ import numpy as np
 import pandas as pd
 from PIL import Image
 from ultralytics import YOLO
+
+if __package__:
+    from .prediction_utils import prediction_key, write_target_predictions
+else:
+    from prediction_utils import prediction_key, write_target_predictions
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -27,7 +31,8 @@ def predict_with_tta(model: YOLO, img_path: str, imgsz: int = 640) -> np.ndarray
     """Run TTA: original + hflip at multiple scales, average softmax outputs."""
     all_probs = []
 
-    img = Image.open(img_path).convert("RGB")
+    with Image.open(img_path) as source:
+        img = source.convert("RGB")
     img_flipped = img.transpose(Image.FLIP_LEFT_RIGHT)
 
     for scale in TTA_SCALES:
@@ -56,7 +61,7 @@ def predict(model_path: str, base_path: str, output_path: str = "predictions.jso
     logger.info(f"Test dataset length: {len(df_test)} | TTA scales: {TTA_SCALES}")
 
     predictions = {}
-    confidences = {}
+    confidences = []
 
     for idx, row in df_test.iterrows():
         img_rel = row["path_img"]
@@ -65,18 +70,15 @@ def predict(model_path: str, base_path: str, output_path: str = "predictions.jso
         top1_class = int(np.argmax(avg_probs))
         confidence = float(avg_probs[top1_class])
 
-        # Key by image filename (strip "all_imgs/" prefix) for reshape compatibility
-        img_key = img_rel.replace("all_imgs/", "")
+        img_key = prediction_key(img_rel)
         predictions[img_key] = top1_class
-        confidences[img_key] = round(confidence, 4)
+        confidences.append(round(confidence, 4))
         logger.info(f"[{idx + 1}/{len(df_test)}] {img_key} -> class {top1_class} (conf={confidence:.3f})")
 
-    output = {"target": predictions}
-    with open(output_path, "w") as f:
-        json.dump(output, f)
+    write_target_predictions(predictions, output_path)
 
     logger.info(f"Saved {len(predictions)} TTA predictions to {output_path}")
-    avg_conf = np.mean(list(confidences.values()))
+    avg_conf = np.mean(confidences)
     logger.info(f"Average confidence: {avg_conf:.4f}")
 
 

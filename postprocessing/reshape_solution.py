@@ -19,14 +19,15 @@ logger = logging.getLogger(__name__)
 
 
 def reshape(predictions_path: str, test_csv_path: str, output_path: str = "predictions.json"):
-    with open(predictions_path) as f:
+    with Path(predictions_path).open(encoding="utf-8") as f:
         data = json.load(f)
 
     df_test = pd.read_csv(test_csv_path)
+    prediction_count = len(data["target"])
+    test_count = len(df_test)
 
-    assert len(data["target"]) == len(df_test), (
-        f"Prediction count mismatch: {len(data['target'])} predictions vs {len(df_test)} test samples"
-    )
+    if prediction_count != test_count:
+        raise ValueError(f"Prediction count mismatch: {prediction_count} predictions vs {test_count} test samples")
 
     # Vectorized mapping: image path -> idx_test -> prediction
     df_test["img_key"] = df_test["path_img"].str.replace("all_imgs/", "", regex=False)
@@ -43,7 +44,7 @@ def reshape(predictions_path: str, test_csv_path: str, output_path: str = "predi
     new_target = dict(zip(df_test["idx_test"].astype(str), df_test["prediction"].astype(int)))
 
     output = {"target": new_target}
-    with open(output_path, "w") as f:
+    with Path(output_path).open("w", encoding="utf-8") as f:
         json.dump(output, f)
 
     logger.info(f"Reshaped {len(new_target)} predictions -> {output_path}")
