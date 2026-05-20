@@ -39,3 +39,5 @@ target-version = "py39"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]
+
+[tool.uv]
