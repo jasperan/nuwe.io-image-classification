@@ -72,7 +72,7 @@ def predict(model_path: str, base_path: str, output_path: str = "predictions.jso
 
         img_key = prediction_key(img_rel)
         predictions[img_key] = top1_class
-        confidences.append(round(confidence, 4))
+        confidences.append(confidence)
         logger.info(f"[{idx + 1}/{len(df_test)}] {img_key} -> class {top1_class} (conf={confidence:.3f})")
 
     write_target_predictions(predictions, output_path)

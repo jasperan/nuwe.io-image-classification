@@ -1,25 +1,10 @@
-import importlib
 import json
-import sys
 import types
-from pathlib import Path
-from types import SimpleNamespace
 
 
-def import_nn_predict(monkeypatch, fake_yolo):
-    monkeypatch.setitem(sys.modules, "ultralytics", SimpleNamespace(YOLO=fake_yolo))
-    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[1] / "nn"))
-    sys.modules.pop("nn_predict", None)
-    return importlib.import_module("nn_predict")
-
-
-def import_nn_predict_package(monkeypatch, fake_yolo):
-    monkeypatch.setitem(sys.modules, "ultralytics", SimpleNamespace(YOLO=fake_yolo))
-    sys.modules.pop("nn.nn_predict", None)
-    return importlib.import_module("nn.nn_predict")
-
-
-def test_predict_writes_target_predictions_with_compatible_image_keys(tmp_path, monkeypatch):
+def test_predict_writes_target_predictions_with_compatible_image_keys(
+    tmp_path, fake_inference_modules
+):
     calls = []
 
     class FakeYOLO:
@@ -30,7 +15,7 @@ def test_predict_writes_target_predictions_with_compatible_image_keys(tmp_path, 
             calls.append(image_path)
             return [types.SimpleNamespace(probs=types.SimpleNamespace(top1=3))]
 
-    module = import_nn_predict(monkeypatch, FakeYOLO)
+    module = fake_inference_modules("nn_predict", FakeYOLO)
     (tmp_path / "test.csv").write_text("path_img\nall_imgs/sample.jpg\n", encoding="utf-8")
     output_path = tmp_path / "predictions.json"
 
@@ -40,11 +25,11 @@ def test_predict_writes_target_predictions_with_compatible_image_keys(tmp_path, 
     assert json.loads(output_path.read_text(encoding="utf-8")) == {"target": {"sample.jpg": 3}}
 
 
-def test_predict_supports_package_import(monkeypatch):
+def test_predict_supports_package_import(fake_inference_modules):
     class FakeYOLO:
         pass
 
-    module = import_nn_predict_package(monkeypatch, FakeYOLO)
+    module = fake_inference_modules("nn_predict", FakeYOLO, package=True)
 
     assert callable(module.predict)
     assert module.prediction_key("all_imgs/sample.jpg") == "sample.jpg"

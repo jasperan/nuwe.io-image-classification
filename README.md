@@ -58,7 +58,7 @@ postprocessing/         # Output formatting
 pip install -e .
 
 # Or manually
-pip install ultralytics pandas torch numpy pyyaml
+pip install ultralytics pandas torch numpy Pillow
 ```
 
 ## Usage

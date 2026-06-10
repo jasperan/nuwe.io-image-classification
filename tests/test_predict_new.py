@@ -1,44 +1,16 @@
-import importlib
 import json
-import sys
-import types
-from pathlib import Path
-from types import SimpleNamespace
 
 import numpy as np
 
 
-def import_predict_new(monkeypatch, fake_yolo):
-    fake_pil = types.ModuleType("PIL")
-    fake_image = types.ModuleType("PIL.Image")
-    fake_pil.Image = fake_image
-    fake_image.FLIP_LEFT_RIGHT = object()
-    monkeypatch.setitem(sys.modules, "PIL", fake_pil)
-    monkeypatch.setitem(sys.modules, "PIL.Image", fake_image)
-    monkeypatch.setitem(sys.modules, "ultralytics", SimpleNamespace(YOLO=fake_yolo))
-    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[1] / "nn"))
-    sys.modules.pop("predict_new", None)
-    return importlib.import_module("predict_new")
-
-
-def import_predict_new_package(monkeypatch, fake_yolo):
-    fake_pil = types.ModuleType("PIL")
-    fake_image = types.ModuleType("PIL.Image")
-    fake_pil.Image = fake_image
-    fake_image.FLIP_LEFT_RIGHT = object()
-    monkeypatch.setitem(sys.modules, "PIL", fake_pil)
-    monkeypatch.setitem(sys.modules, "PIL.Image", fake_image)
-    monkeypatch.setitem(sys.modules, "ultralytics", SimpleNamespace(YOLO=fake_yolo))
-    sys.modules.pop("nn.predict_new", None)
-    return importlib.import_module("nn.predict_new")
-
-
-def test_tta_predict_writes_target_predictions_with_compatible_image_keys(tmp_path, monkeypatch):
+def test_tta_predict_writes_target_predictions_with_compatible_image_keys(
+    tmp_path, monkeypatch, fake_inference_modules
+):
     class FakeYOLO:
         def __init__(self, model_path):
             self.model_path = model_path
 
-    module = import_predict_new(monkeypatch, FakeYOLO)
+    module = fake_inference_modules("predict_new", FakeYOLO, with_pil=True)
     monkeypatch.setattr(module, "predict_with_tta", lambda model, image_path, imgsz=640: np.array([0.1, 0.7, 0.2]))
     (tmp_path / "test.csv").write_text("path_img\nall_imgs/sample.jpg\n", encoding="utf-8")
     output_path = tmp_path / "predictions_tta.json"
@@ -48,11 +20,11 @@ def test_tta_predict_writes_target_predictions_with_compatible_image_keys(tmp_pa
     assert json.loads(output_path.read_text(encoding="utf-8")) == {"target": {"sample.jpg": 1}}
 
 
-def test_tta_predict_supports_package_import(monkeypatch):
+def test_tta_predict_supports_package_import(fake_inference_modules):
     class FakeYOLO:
         pass
 
-    module = import_predict_new_package(monkeypatch, FakeYOLO)
+    module = fake_inference_modules("predict_new", FakeYOLO, package=True, with_pil=True)
 
     assert callable(module.predict)
     assert module.prediction_key("all_imgs/sample.jpg") == "sample.jpg"
