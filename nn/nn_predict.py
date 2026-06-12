@@ -10,12 +10,8 @@ from pathlib import Path
 import pandas as pd
 from ultralytics import YOLO
 
-if __package__:
-    from .prediction_utils import prediction_key, write_target_predictions
-else:
-    from prediction_utils import prediction_key, write_target_predictions
+from nn.prediction_utils import prediction_key, write_target_predictions
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -42,6 +38,8 @@ def predict(model_path: str, base_path: str, output_path: str = "predictions.jso
 
 if __name__ == "__main__":
     import argparse
+
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
     parser = argparse.ArgumentParser(description="Run YOLO classification inference")
     parser.add_argument("--model", type=str, required=True, help="Path to .pt model file")

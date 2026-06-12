@@ -18,13 +18,3 @@ def test_tta_predict_writes_target_predictions_with_compatible_image_keys(
     module.predict("model.pt", str(tmp_path), str(output_path))
 
     assert json.loads(output_path.read_text(encoding="utf-8")) == {"target": {"sample.jpg": 1}}
-
-
-def test_tta_predict_supports_package_import(fake_inference_modules):
-    class FakeYOLO:
-        pass
-
-    module = fake_inference_modules("predict_new", FakeYOLO, package=True, with_pil=True)
-
-    assert callable(module.predict)
-    assert module.prediction_key("all_imgs/sample.jpg") == "sample.jpg"

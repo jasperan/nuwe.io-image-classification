@@ -23,13 +23,3 @@ def test_predict_writes_target_predictions_with_compatible_image_keys(
 
     assert calls == [str(tmp_path / "all_imgs/sample.jpg")]
     assert json.loads(output_path.read_text(encoding="utf-8")) == {"target": {"sample.jpg": 3}}
-
-
-def test_predict_supports_package_import(fake_inference_modules):
-    class FakeYOLO:
-        pass
-
-    module = fake_inference_modules("nn_predict", FakeYOLO, package=True)
-
-    assert callable(module.predict)
-    assert module.prediction_key("all_imgs/sample.jpg") == "sample.jpg"

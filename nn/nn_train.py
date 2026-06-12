@@ -2,14 +2,13 @@
 Train a YOLO classification model with optimized augmentation settings.
 
 Usage:
-    python nn_train.py --data /path/to/dataset --epochs 300 --imgsz 640
+    python -m nn.nn_train --data /path/to/dataset --epochs 300 --imgsz 640
 """
 
 import logging
 
 from ultralytics import YOLO
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -45,6 +44,8 @@ def train(data_path: str, epochs: int = 300, imgsz: int = 640, model_name: str =
 
 if __name__ == "__main__":
     import argparse
+
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
     parser = argparse.ArgumentParser(description="Train YOLO classification model")
     parser.add_argument("--data", type=str, required=True, help="Path to dataset directory")

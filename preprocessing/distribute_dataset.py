@@ -5,7 +5,7 @@ Reads train.csv and test.csv, copies images into train/{label}/ and test/ direct
 following the Ultralytics classification dataset structure.
 
 Usage:
-    python distribute_dataset.py --data /path/to/dataset --output /path/to/output
+    python -m preprocessing.distribute_dataset --data /path/to/dataset --output /path/to/output
 """
 
 import logging
@@ -14,7 +14,6 @@ from pathlib import Path
 
 import pandas as pd
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -52,6 +51,8 @@ def distribute(data_path: str, output_path: str):
 
 if __name__ == "__main__":
     import argparse
+
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
     parser = argparse.ArgumentParser(description="Distribute dataset into YOLO format")
     parser.add_argument("--data", type=str, required=True, help="Base path with train.csv, test.csv, and images")

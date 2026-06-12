@@ -1,12 +1,9 @@
 import importlib
 import sys
 import types
-from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-
-NN_DIR = Path(__file__).resolve().parents[1] / "nn"
 
 
 def _install_fake_pil(monkeypatch):
@@ -24,22 +21,18 @@ def _install_fake_ultralytics(monkeypatch, fake_yolo):
 
 @pytest.fixture
 def fake_inference_modules(monkeypatch):
-    """Stub out ultralytics/PIL and import a predict module either as a loose
-    script (off the ``nn/`` dir) or as part of the ``nn`` package.
+    """Stub out ultralytics/PIL and import a predict module from the ``nn``
+    package with the fakes in place.
 
-    Returns an ``import_module(name, fake_yolo, *, package=False, with_pil=False)``
-    callable that yields the imported module.
+    Returns an ``import_module(name, fake_yolo, *, with_pil=False)`` callable
+    that yields the imported ``nn.<name>`` module.
     """
 
-    def import_module(name, fake_yolo, *, package=False, with_pil=False):
+    def import_module(name, fake_yolo, *, with_pil=False):
         _install_fake_ultralytics(monkeypatch, fake_yolo)
         if with_pil:
             _install_fake_pil(monkeypatch)
-        if package:
-            module_name = f"nn.{name}"
-        else:
-            monkeypatch.syspath_prepend(str(NN_DIR))
-            module_name = name
+        module_name = f"nn.{name}"
         sys.modules.pop(module_name, None)
         return importlib.import_module(module_name)
 

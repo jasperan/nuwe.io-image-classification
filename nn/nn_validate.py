@@ -6,7 +6,6 @@ import logging
 
 from ultralytics import YOLO
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -21,6 +20,8 @@ def validate(model_path: str):
 
 if __name__ == "__main__":
     import argparse
+
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
     parser = argparse.ArgumentParser(description="Validate YOLO classification model")
     parser.add_argument("--model", type=str, required=True, help="Path to .pt model file")

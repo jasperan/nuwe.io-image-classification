@@ -5,7 +5,7 @@ Applies horizontal flip + multi-scale inference and averages softmax outputs
 for a 2-5% accuracy boost over single-pass prediction.
 
 Usage:
-    python predict_new.py --model model.pt --data /path/to/dataset --output predictions.json
+    python -m nn.predict_new --model model.pt --data /path/to/dataset --output predictions.json
 """
 
 import logging
@@ -16,12 +16,8 @@ import pandas as pd
 from PIL import Image
 from ultralytics import YOLO
 
-if __package__:
-    from .prediction_utils import prediction_key, write_target_predictions
-else:
-    from prediction_utils import prediction_key, write_target_predictions
+from nn.prediction_utils import prediction_key, write_target_predictions
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
 TTA_SCALES = [0.85, 1.0, 1.15]
@@ -38,15 +34,10 @@ def predict_with_tta(model: YOLO, img_path: str, imgsz: int = 640) -> np.ndarray
     for scale in TTA_SCALES:
         scaled_size = int(imgsz * scale)
 
-        # Original image
-        results = model(img, imgsz=scaled_size, verbose=False)
-        probs = results[0].probs.data.cpu().numpy()
-        all_probs.append(probs)
-
-        # Horizontally flipped image
-        results_flip = model(img_flipped, imgsz=scaled_size, verbose=False)
-        probs_flip = results_flip[0].probs.data.cpu().numpy()
-        all_probs.append(probs_flip)
+        # Original + horizontally flipped image at this scale
+        for variant in (img, img_flipped):
+            results = model(variant, imgsz=scaled_size, verbose=False)
+            all_probs.append(results[0].probs.data.cpu().numpy())
 
     # Average all softmax outputs
     avg_probs = np.mean(all_probs, axis=0)
@@ -84,6 +75,8 @@ def predict(model_path: str, base_path: str, output_path: str = "predictions.jso
 
 if __name__ == "__main__":
     import argparse
+
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
     parser = argparse.ArgumentParser(description="Run YOLO classification with TTA")
     parser.add_argument("--model", type=str, required=True, help="Path to .pt model file")

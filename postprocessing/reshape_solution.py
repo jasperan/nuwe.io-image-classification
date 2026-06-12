@@ -5,7 +5,8 @@ Maps image-name-keyed predictions to idx_test-keyed predictions
 as required by the nuwe.io submission format.
 
 Usage:
-    python reshape_solution.py --predictions raw_predictions.json --test test.csv --output predictions.json
+    python -m postprocessing.reshape_solution \
+        --predictions raw_predictions.json --test test.csv --output predictions.json
 """
 
 import json
@@ -14,7 +15,6 @@ from pathlib import Path
 
 import pandas as pd
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -52,6 +52,8 @@ def reshape(predictions_path: str, test_csv_path: str, output_path: str = "predi
 
 if __name__ == "__main__":
     import argparse
+
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
     parser = argparse.ArgumentParser(description="Reshape predictions to submission format")
     parser.add_argument("--predictions", type=str, required=True, help="Raw predictions JSON")

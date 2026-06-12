@@ -54,19 +54,22 @@ postprocessing/         # Output formatting
 
 
 ```bash
-# Install dependencies
+# Install the project and its dependencies (editable)
 pip install -e .
 
-# Or manually
+# Or just the runtime dependencies
 pip install ultralytics pandas torch numpy Pillow
 ```
+
+Installing the project makes `nn`, `preprocessing`, and `postprocessing`
+importable, so each stage runs as a module with `python -m`.
 
 ## Usage
 
 ### 1. Prepare dataset
 
 ```bash
-python preprocessing/distribute_dataset.py \
+python -m preprocessing.distribute_dataset \
   --data /path/to/raw/dataset \
   --output /path/to/organized/dataset
 ```
@@ -74,7 +77,7 @@ python preprocessing/distribute_dataset.py \
 ### 2. Train
 
 ```bash
-python nn/nn_train.py \
+python -m nn.nn_train \
   --data /path/to/organized/dataset \
   --epochs 300 \
   --imgsz 640
@@ -84,12 +87,12 @@ python nn/nn_train.py \
 
 ```bash
 # Standard prediction
-python nn/nn_predict.py \
+python -m nn.nn_predict \
   --model best.pt \
   --data /path/to/dataset
 
 # TTA prediction (2-5% accuracy boost)
-python nn/predict_new.py \
+python -m nn.predict_new \
   --model best.pt \
   --data /path/to/dataset \
   --output predictions_tta.json
@@ -98,7 +101,7 @@ python nn/predict_new.py \
 ### 4. Format for submission
 
 ```bash
-python postprocessing/reshape_solution.py \
+python -m postprocessing.reshape_solution \
   --predictions raw_predictions.json \
   --test /path/to/test.csv \
   --output predictions.json
