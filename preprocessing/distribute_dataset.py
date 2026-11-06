@@ -16,6 +16,39 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
+ALLOWED_LABELS = frozenset(str(index) for index in range(8))
+
+
+def _manifest_field(row, name: str) -> str:
+    """Return a manifest field as text, rejecting empty or missing values."""
+    value = row[name]
+    if pd.isna(value):
+        raise ValueError(f"{name} must be present in every manifest row")
+    return str(value)
+
+
+def _resolve_within(root: Path, value: str, field: str) -> Path:
+    """Resolve a manifest path against ``root``, rejecting absolute paths and escapes."""
+    candidate = Path(value)
+    if not candidate.parts or candidate.is_absolute() or ".." in candidate.parts:
+        raise ValueError(f"{field} must be a relative path without '..': {value!r}")
+    root_resolved = root.resolve()
+    resolved = (root_resolved / candidate).resolve()
+    if root_resolved not in resolved.parents:
+        raise ValueError(f"{field} escapes {root_resolved}: {value!r}")
+    return resolved
+
+
+def _resolve_label(train_dir: Path, label: str) -> Path:
+    """Resolve a class directory under ``train_dir`` for one of the known labels."""
+    if label not in ALLOWED_LABELS:
+        raise ValueError(f"label must be one of {sorted(ALLOWED_LABELS)}: {label!r}")
+    train_resolved = train_dir.resolve()
+    dest_dir = (train_resolved / label).resolve()
+    if train_resolved not in dest_dir.parents:
+        raise ValueError(f"label escapes {train_resolved}: {label!r}")
+    return dest_dir
+
 
 def distribute(data_path: str, output_path: str):
     base = Path(data_path)
@@ -33,9 +66,9 @@ def distribute(data_path: str, output_path: str):
 
     # Distribute training images into class folders
     for _, row in df_train.iterrows():
-        img_path = base / row["path_img"]
-        label = str(row["label"])
-        dest_dir = train_dir / label
+        img_path = _resolve_within(base, _manifest_field(row, "path_img"), "path_img")
+        label = _manifest_field(row, "label")
+        dest_dir = _resolve_label(train_dir, label)
         dest_dir.mkdir(exist_ok=True)
         shutil.copy(str(img_path), str(dest_dir))
 
@@ -43,7 +76,7 @@ def distribute(data_path: str, output_path: str):
 
     # Copy test images to flat directory
     for _, row in df_test.iterrows():
-        img_path = base / row["path_img"]
+        img_path = _resolve_within(base, _manifest_field(row, "path_img"), "path_img")
         shutil.copy(str(img_path), str(test_dir))
 
     logger.info(f"Copied {len(df_test)} test images to {test_dir}")
